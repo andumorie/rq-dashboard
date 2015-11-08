@@ -48,8 +48,17 @@ def setup_rq_connection():
 
 
 @blueprint.before_request
-def push_rq_connection():
+def basic_http_auth(*args, **kwargs):
     push_connection(current_app.redis_conn)
+    auth = request.authorization
+    if (
+            auth is None
+            or auth.password != current_app.config.get('RQ_DASHBOARD_PASSWORD')
+            or auth.username != current_app.config.get('RQ_DASHBOARD_USERNAME')):
+        return Response(
+            'Please login',
+            401,
+            {'WWW-Authenticate': 'Basic realm="RQ Dashboard"'})
 
 
 @blueprint.teardown_request
